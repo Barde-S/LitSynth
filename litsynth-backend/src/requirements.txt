@@ -1,0 +1,55 @@
+# ===================================
+# LitSynth Dependencies
+# Academic Research Assistant
+# ===================================
+
+# ----- Web Framework -----
+fastapi[standard]==0.115.7
+uvicorn==0.34.0
+
+# ----- LLM & AI Libraries -----
+langchain==0.3.26
+langchain-community==0.3.27
+langchain-google-genai>=2.0.0  # For Google Gemini
+langchain-huggingface>=0.0.1  # For free local embeddings
+
+# Free embedding models (Sentence Transformers)
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+torch>=2.0.0  # or tensorflow>=2.13.0
+einops>=0.7.0  # Required for nomic-embed-text-v1.5
+
+# ----- Vector Database -----
+chromadb>=0.4.22
+langchain-chroma>=0.1.0
+
+# ----- Hybrid Search (BM25 + Vector) -----
+rank-bm25>=0.2.2  # For keyword-based retrieval in hybrid search
+
+# ----- Database & Caching -----
+sqlmodel==0.0.22
+aiocache[redis]==0.12.3
+
+# ----- Authentication -----
+passlib==1.7.4
+python-jose[cryptography]==3.3.0
+bcrypt==4.0.1
+
+# ----- Document Processing -----
+pypdf==5.2.0
+PyMuPDF==1.26.3
+PyPDF2>=3.0.0  # For PDF manipulation in Google Vision OCR
+reportlab>=4.0.0  # For creating searchable PDFs
+pdf2image>=1.16.0  # Fallback for PDF to image conversion
+
+# ----- OCR Services -----
+google-cloud-vision>=3.4.0  # Google Vision OCR (Active)
+# pdfservices-sdk==2.3.1  # Adobe OCR (OLD - commented out)
+
+# ----- Utilities -----
+python-dotenv==1.0.1
+pandas[excel]==2.2.3  # Only needed if using old config system
+
+# ----- Development -----
+# pytest>=7.4.0
+# black>=23.0.0

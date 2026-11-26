@@ -1,0 +1,63 @@
+services:
+  # Backend Web Service (FastAPI)
+  - type: web
+    name: litsynth-backend
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.6
+      - key: DEBUG
+        value: false
+      - key: LITSYNTH_INSECURE_MODE
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: litsynth-postgres
+          property: connectionString
+      - key: CHROMA_PERSIST_DIR
+        value: /opt/render/project/chromadb_data
+      - key: REDIS_HOST
+        fromService:
+          name: litsynth-redis
+          type: redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: litsynth-redis
+          type: redis
+          property: port
+      - key: REDIS_PASSWORD
+        fromService:
+          name: litsynth-redis
+          type: redis
+          property: connectionString
+      # The following secrets should be added manually via Render dashboard:
+      # - JWT_SECRET_KEY (generate with: openssl rand -hex 32)
+      # - GOOGLE_API_KEY (Gemini API key)
+      # - GOOGLE_APPLICATION_CREDENTIALS (Google Cloud Vision JSON - paste content)
+      # - LITSYNTH_MASTER_TOKEN (optional admin token)
+    disk:
+      name: chromadb-data
+      mountPath: /opt/render/project/chromadb_data
+      sizeGB: 1
+
+databases:
+  # PostgreSQL Database
+  - name: litsynth-postgres
+    databaseName: litsynth
+    user: litsynth_user
+    plan: free
+    region: oregon
+
+# Redis Instance (commented out - add via Render dashboard instead)
+# Render's free tier Redis is created separately via the dashboard
+# To create Redis:
+# 1. Go to Render Dashboard > New > Redis
+# 2. Name: litsynth-redis
+# 3. Select free tier (25 MB)
+# 4. The environment variables above will auto-populate once created

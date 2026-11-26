@@ -1,0 +1,80 @@
+name: litsynth-dev
+
+services:
+  proxy:
+    image: "traefik:v3.3"
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=litsynth-dev_default"
+      - "--providers.docker.constraints=Label(`traefik.project`,`litsynth`)"
+      - "--entryPoints.web.address=:80"
+    ports:
+      - "8006:80"
+      - "8081:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  backend:
+    build:
+      context: ./litsynth-backend/src
+      dockerfile: DockerFile
+    command: >
+      uvicorn main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+      --reload-dir /app/src
+    env_file:
+      - ./litsynth-backend/.env
+    environment:
+      - TOKENIZERS_PARALLELISM=false
+      - OMP_NUM_THREADS=1
+      - MKL_NUM_THREADS=1
+      - REDIS_HOST=redis
+      - DEBUG=true
+    depends_on:
+      redis:
+        condition: service_started
+    labels:
+      - "traefik.project=litsynth"
+      - "traefik.enable=true"
+      - "traefik.http.routers.litsynth-backend.rule=PathPrefix(`/auth`) || PathPrefix(`/workspaces`) || PathPrefix(`/chats`) || PathPrefix(`/chat`) || PathPrefix(`/upload-papers`) || PathPrefix(`/upload-progress`) || PathPrefix(`/documents`) || PathPrefix(`/vectors`) || PathPrefix(`/health`) || PathPrefix(`/docs`) || PathPrefix(`/openapi.json`)"
+      - "traefik.http.routers.litsynth-backend.entrypoints=web"
+      - "traefik.http.routers.litsynth-backend.priority=100"
+      - "traefik.http.services.litsynth-backend.loadbalancer.server.port=8000"
+    volumes:
+      - ./litsynth-backend/data/:/app/data/
+      - ./litsynth-backend/src/:/app/src/
+      - hf_cache:/root/.cache/huggingface/
+
+  frontend:
+    build:
+      context: ./litsynth-frontend
+      dockerfile: Dockerfile
+    command: npm run dev -- --host 0.0.0.0
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8006
+    labels:
+      - "traefik.project=litsynth"
+      - "traefik.enable=true"
+      - "traefik.http.routers.litsynth-frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.litsynth-frontend.entrypoints=web"
+      - "traefik.http.routers.litsynth-frontend.priority=1"
+      - "traefik.http.services.litsynth-frontend.loadbalancer.server.port=3000"
+    volumes:
+      - ./litsynth-frontend/src/:/app/src/
+      - ./litsynth-frontend/public/:/app/public/
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  redis:
+    image: "redis:alpine"
+    volumes:
+      - redis_data:/data/
+
+volumes:
+  redis_data:
+  hf_cache:

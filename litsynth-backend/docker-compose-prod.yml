@@ -1,0 +1,58 @@
+name: litsynth-prod
+
+services:
+  proxy:
+    image: "traefik:v3.4.4"
+    restart: on-failure
+    command:
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=mossabdiae@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      # Timeouts setup (TODO: refactor to job pattern and reset these to sane values)
+      - "--entryPoints.websecure.transport.respondingTimeouts.writeTimeout=0" # Default 0
+      - "--entryPoints.websecure.transport.respondingTimeouts.readTimeout=100" # Default 60
+    ports:
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - traefik-certs:/letsencrypt
+      
+  backend:
+    build:
+      context: src
+      dockerfile: DockerFile
+    command: ["uvicorn", "main:app", "--workers", "4", "--proxy-headers", "--host", "0.0.0.0", "--port", "8000"]
+    restart: on-failure
+    env_file:
+      - .env
+    environment:
+      DEBUG: "false"
+    depends_on:
+      redis:
+        condition: service_started
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`litsynth.yourdomain.com`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    volumes:
+      - ./data/:/app/data/
+      - ./src/:/app/src/
+
+  redis:
+    image: "redis:alpine"
+    restart: on-failure
+    volumes:
+      - redis_data:/data/
+
+volumes:
+  redis_data:
+  # static_media:
+  traefik-certs:

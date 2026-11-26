@@ -1,0 +1,50 @@
+name: litsynth-dev
+
+services:
+  proxy:
+    image: "traefik:v3.3"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.web.address=:80"
+    ports:
+      - "8005:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      
+  backend:
+    build:
+      context: src
+      dockerfile: DockerFile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_started
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`localhost`) || Host(`127.0.0.1`)"
+      - "traefik.http.routers.backend.entrypoints=web"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+    volumes:
+      - ./data/:/app/data/
+      - ./src/:/app/src/
+      # load lab to get csv output
+      - ./lab/:/app/lab/
+
+
+  redis:
+    image: "redis:alpine"
+    volumes:
+      - redis_data:/data/
+
+volumes:
+  redis_data:
+  # static_media:
+  # where obtained lestencrypt certs are saved
+  # certs:

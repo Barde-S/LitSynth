@@ -1,0 +1,50 @@
+# Core Framework
+fastapi==0.115.7
+uvicorn[standard]==0.34.0
+python-dotenv==1.0.0
+pydantic==2.10.5
+pydantic-settings==2.7.0
+
+# Database & ORM
+sqlmodel==0.0.22
+psycopg2-binary==2.9.10  # PostgreSQL adapter for production
+
+# Authentication & Security
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+
+# Caching
+aiocache[redis]==0.12.3
+
+# Vector Database & Embeddings
+chromadb==0.4.22
+langchain==0.3.26
+langchain-core==0.3.66
+langchain-community==0.3.26
+langchain-chroma==0.2.1
+langchain-text-splitters==0.3.8
+langchain-google-genai==2.0.8
+sentence-transformers==3.3.1
+
+# PDF Processing & OCR
+pypdf==5.1.0
+PyPDF2==3.0.1
+google-cloud-vision==3.4.0
+
+# Retrieval
+rank-bm25==0.2.2
+
+# Email Service (for OTP)
+python-multipart==0.0.20
+
+# HTTP Client (for OCR services if needed)
+httpx==0.28.1
+aiohttp==3.11.11
+
+# Utilities
+python-magic==0.4.27
+
+# Evaluation (RAGAS Framework)
+ragas>=0.3.0
+datasets>=2.14.0
+langchain-huggingface>=0.1.0
